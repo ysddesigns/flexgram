@@ -21,9 +21,9 @@ const View = ThemedView;
 const Settings = () => {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme || "light"];
-  async function openGithub(url: any) {
-    await Linking.openURL(url);
-  }
+  // async function openGithub(url: any) {
+  //   await Linking.openURL(url);
+  // }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -69,20 +69,15 @@ const Settings = () => {
         showForwardIcon={false}
       />
 
-      <TouchableOpacity
-        style={styles.githubLink}
-        onPress={() =>
-          openGithub("https://github.com/Ctere1/react-native-chat")
-        }
-      >
+      <TouchableOpacity style={styles.githubLink}>
         <View>
           <Text style={{ fontSize: 12, fontWeight: "400" }}>
             <Ionicons
-              name="logo-github"
+              name="logo-dropbox"
               size={12}
               style={{ color: theme.icon }}
             />{" "}
-            App's Github
+            from Maij Family
           </Text>
         </View>
       </TouchableOpacity>
