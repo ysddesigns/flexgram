@@ -20,13 +20,13 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <Text style={[styles.appName, { color: theme.tint }]}>FlexGram</Text>
+      <Text style={[styles.appName, { color: theme.text }]}>FlexGram</Text>
       <View style={styles.iconContainer}>
         <TouchableOpacity onPress={onSearchPress}>
           <Ionicons
             name="search"
             size={24}
-            color={theme.tint}
+            color={theme.icon}
             style={styles.icon}
           />
         </TouchableOpacity>
@@ -34,7 +34,7 @@ const Header: React.FC<HeaderProps> = ({
           <Ionicons
             name="camera"
             size={24}
-            color={theme.tint}
+            color={theme.icon}
             style={styles.icon}
           />
         </TouchableOpacity>
@@ -42,7 +42,7 @@ const Header: React.FC<HeaderProps> = ({
           <Ionicons
             name="ellipsis-vertical"
             size={24}
-            color={theme.tint}
+            color={theme.icon}
             style={styles.icon}
           />
         </TouchableOpacity>
@@ -53,6 +53,8 @@ const Header: React.FC<HeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
+    marginTop: 12,
+
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -62,9 +64,10 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.grey,
   },
   appName: {
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: "bold",
-    padding: 20,
+    padding: 17,
+    marginTop: 7,
   },
   iconContainer: {
     flexDirection: "row",

@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Dimensions,
   Platform,
+  StatusBar,
+  ViewStyle,
 } from "react-native";
 import { Colors } from "@/constants/Colors"; // Customize your colors in a separate file
 import { useRouter } from "expo-router";
@@ -17,10 +19,13 @@ import { auth } from "@/firebaseConfig";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { StatusBar } from "react-native";
+import Logo from "@/components/logo";
 
 const Text = ThemedText;
 const View = ThemedView;
+
+const screenWidth = Dimensions.get("window").width; // Get screen width
+const screenHeight = Dimensions.get("window").height; // Get screen height
 
 const LoginScreen: React.FC = () => {
   const router = useRouter();
@@ -50,8 +55,6 @@ const LoginScreen: React.FC = () => {
           } else {
             setError("An unknown error occurred. Please try again.");
           }
-          // Alert.alert("Login error", error);
-          console.log("Error", error);
         })
         .finally(() => {
           setLoading(false); // Stop loading indicator
@@ -68,6 +71,19 @@ const LoginScreen: React.FC = () => {
     router.push("/(auth)/Signup");
   };
 
+  // Dynamic styles
+  const getButtonStyle = (loading: boolean) =>
+    ({
+      backgroundColor: loading ? theme.teal : theme.tint,
+      width: screenWidth > 500 ? "50%" : "90%", // Adjust based on screen width
+      maxWidth: 400,
+      alignSelf: "center",
+      paddingVertical: 15,
+      borderRadius: 8,
+      alignItems: "center",
+      marginBottom: 20,
+    } as ViewStyle);
+
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
@@ -78,17 +94,19 @@ const LoginScreen: React.FC = () => {
           Log in to your account
         </Text>
       </View>
+      <Logo />
 
       <View style={styles.formContainer}>
         <TextInput
           style={[
             styles.input,
             {
-              width: "90%", // Covers 90% of the screen width
-              maxWidth: 400, // Ensures it doesn’t get too wide on larger screens
+              width: "90%",
+              maxWidth: 400,
               alignSelf: "center",
+              backgroundColor: theme.background,
+              color: theme.text,
             },
-            { backgroundColor: theme.background, color: theme.text },
           ]}
           placeholder="Email"
           placeholderTextColor={theme.icon}
@@ -102,11 +120,12 @@ const LoginScreen: React.FC = () => {
           style={[
             styles.input,
             {
-              width: "90%", // Covers 90% of the screen width
-              maxWidth: 400, // Ensures it doesn’t get too wide on larger screens
+              width: "90%",
+              maxWidth: 400,
               alignSelf: "center",
+              backgroundColor: theme.background,
+              color: theme.text,
             },
-            { backgroundColor: theme.background, color: theme.text },
           ]}
           placeholder="Password"
           placeholderTextColor={theme.icon}
@@ -117,17 +136,7 @@ const LoginScreen: React.FC = () => {
 
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity
-          style={[
-            styles.button,
-            {
-              width: "90%", // Adaptive to screen width
-              maxWidth: 400, // Limit maximum width
-              alignSelf: "center", // Center the button
-            },
-            loading
-              ? { backgroundColor: theme.teal }
-              : { backgroundColor: theme.tint },
-          ]}
+          style={getButtonStyle(loading)}
           onPress={onHandleLogin}
           disabled={loading}
         >
@@ -153,8 +162,6 @@ const LoginScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
-
-const screenWidth = Dimensions.get("window").width;
 
 const styles = StyleSheet.create({
   container: {
@@ -188,7 +195,6 @@ const styles = StyleSheet.create({
   errorText: {
     color: "#ff6b00",
     marginBottom: 12,
-    // backgroundColor: "#5b0000",
     padding: 3,
     textAlign: "center",
     borderRadius: 7,
@@ -201,24 +207,6 @@ const styles = StyleSheet.create({
     padding: 12,
     borderWidth: 1,
     borderColor: Colors.border,
-    width: screenWidth > 500 ? "50%" : "90%", // Adjust based on screen width
-    maxWidth: 400,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  inputWrapper: {
-    width: "100%",
-    maxWidth: 400, // Ensures a consistent width for large screens
-  },
-
-  button: {
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  buttonDisabled: {
-    backgroundColor: Colors.grey,
   },
   buttonText: {
     fontSize: 16,

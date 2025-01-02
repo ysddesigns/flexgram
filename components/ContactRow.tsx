@@ -22,6 +22,7 @@ const ContactRow = ({
 }: any) => {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme || "light"];
+
   return (
     <TouchableOpacity
       style={[styles.row, style]}
@@ -36,7 +37,6 @@ const ContactRow = ({
       >
         <Text style={[styles.avatarLabel, { backgroundColor: theme.primary }]}>
           {name
-            .trim()
             .split(" ")
             .reduce((prev, current) => `${prev}${current[0]}`, "")}
         </Text>

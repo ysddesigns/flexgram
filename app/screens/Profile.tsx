@@ -13,6 +13,7 @@ import { Colors } from "@/constants/Colors";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useColorScheme } from "react-native";
+import { Stack } from "expo-router";
 
 const Text = ThemedText;
 const View = ThemedView;
@@ -48,6 +49,7 @@ const Profile = () => {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
+      <Stack.Screen options={{ title: "Profile" }} />
       {/* Profile Avatar */}
       <View style={styles.avatarContainer}>
         <TouchableOpacity

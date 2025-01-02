@@ -1,23 +1,18 @@
 import { Stack } from "expo-router";
 
-const AuthLayout = () => {
+const AuthLayout: React.FC = () => {
   return (
-    <>
-      <Stack>
-        <Stack.Screen
-          name="Login"
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="Signup"
-          options={{
-            headerShown: false,
-          }}
-        />
-      </Stack>
-    </>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: "fade", // Options: "slide_from_right", "slide_from_bottom", "fade"
+      }}
+    >
+      <Stack.Screen name="Login" />
+      <Stack.Screen name="Signup" />
+      <Stack.Screen name="VerifyEmail" />
+    </Stack>
   );
 };
+
 export default AuthLayout;

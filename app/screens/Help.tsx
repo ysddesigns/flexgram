@@ -5,6 +5,7 @@ import { StyleSheet, Alert } from "react-native";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { Stack } from "expo-router";
 
 const Text = ThemedText;
 const View = ThemedView;
@@ -12,11 +13,13 @@ const View = ThemedView;
 const Help = () => {
   return (
     <View>
+      <Stack.Screen options={{ title: "Help" }} />
+
       <Cell
         title="Contact us"
         subtitle="Questions? Need help?"
         icon="people-outline"
-        tintColor={Colors.primary}
+        tintColor={"transparent"}
         onPress={() => {
           alert("Help touched");
         }}
@@ -26,7 +29,8 @@ const Help = () => {
       <Cell
         title="App info"
         icon="information-circle-outline"
-        tintColor={Colors.pink}
+        iconColor="#fefefe"
+        tintColor={"#000000"}
         onPress={() => {
           Alert.alert(
             "Flexgram Chat App",

@@ -122,7 +122,7 @@ const Group = () => {
     }).then(() => {
       // navigation.navigate('Chat', { id: newRef.id, chatName: groupName });
       router.push({
-        pathname: "screen/Chat",
+        pathname: "/screens/Chat",
         params: { id: newRef.id, chatName: groupName },
       });
       deSelectItems();

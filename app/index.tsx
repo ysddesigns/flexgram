@@ -1,4 +1,10 @@
-import { ActivityIndicator, StyleSheet, useColorScheme } from "react-native";
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  StyleSheet,
+  useColorScheme,
+} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import { router } from "expo-router";
@@ -37,7 +43,6 @@ const RootApp = () => {
           }
         }
       }
-
       // If no stored user or user doesn't match, check auth state
       const unsubscribe = auth.onAuthStateChanged(async (user) => {
         try {
@@ -58,10 +63,8 @@ const RootApp = () => {
           console.error("Error retrieving user info from AsyncStorage:", error);
         }
       });
-
       return () => unsubscribe(); // Clean up the listener on unmount
     };
-
     checkUserStatus();
   }, []);
 
@@ -76,8 +79,18 @@ const RootApp = () => {
           backgroundColor: theme.background,
         }}
       >
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text style={styles.text}>Welcome to FlexGram</Text>
+        <Image
+          source={require("@/assets/images/fxLogo.png")}
+          style={styles.logo}
+        />
+        <Pressable onPress={() => router.replace("/(auth)/Login")}>
+          <Text>from Maij Family</Text>
+        </Pressable>
+        <ActivityIndicator
+          size="large"
+          color="#0000ff"
+          style={styles.indicator}
+        />
       </View>
     );
   }
@@ -96,6 +109,15 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 24,
     // color: "#000", // Ensure text color is readable
+  },
+  logo: {
+    width: 200,
+    height: 200,
+    resizeMode: "contain",
+  },
+  indicator: {
+    position: "absolute",
+    bottom: 30,
   },
 });
 

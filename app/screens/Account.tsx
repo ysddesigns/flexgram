@@ -1,11 +1,11 @@
 import React from "react";
-import { StyleSheet, Alert } from "react-native";
+import { StyleSheet, Alert, useColorScheme } from "react-native";
 import { deleteUser, signOut } from "firebase/auth";
 import { deleteDoc, doc } from "firebase/firestore";
 import { auth, db } from "@/firebaseConfig";
 import Cell from "@/components/Cell";
 import { Colors } from "@/constants/Colors";
-import { router } from "expo-router";
+import { router, Stack } from "expo-router";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -14,6 +14,8 @@ const Text = ThemedText;
 const View = ThemedView;
 
 const Account = () => {
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme || "light"];
   const onSignOut = () => {
     try {
       signOut(auth);
@@ -33,10 +35,13 @@ const Account = () => {
 
   return (
     <View>
+      <Stack.Screen options={{ title: "Account" }} />
+
       <Cell
         title="Blocked Users"
         icon="close-circle-outline"
-        tintColor={Colors.primary}
+        tintColor={"transparent"}
+        iconColor="red"
         onPress={() => {
           alert("Blocked users touched");
         }}
@@ -45,7 +50,7 @@ const Account = () => {
       <Cell
         title="Logout"
         icon="log-out-outline"
-        tintColor={Colors.grey}
+        tintColor={"transparent"}
         onPress={() => {
           Alert.alert(
             "Logout?",
@@ -69,7 +74,8 @@ const Account = () => {
       <Cell
         title="Delete my account"
         icon="trash-outline"
-        tintColor={Colors.red}
+        iconColor={"white"}
+        tintColor={"red"}
         onPress={() => {
           Alert.alert(
             "Delete account?",

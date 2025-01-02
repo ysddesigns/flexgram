@@ -8,12 +8,12 @@ import {
   Dimensions,
 } from "react-native";
 import { sendEmailVerification } from "firebase/auth";
-// import { auth } from "@/firebaseConfig";
 import { Colors } from "@/constants/Colors";
 import { router } from "expo-router";
 import { getAuth } from "firebase/auth";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import Toast from "react-native-toast-message";
 
 const Text = ThemedText;
 const View = ThemedView;
@@ -36,27 +36,52 @@ const VerifyEmail = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (countdown > 0) {
+      const interval = setInterval(
+        () => setCountdown((prev) => prev - 1),
+        1000
+      );
+      return () => clearInterval(interval);
+    } else {
+      setCanResend(true);
+    }
+  }, [countdown]);
+
   const checkEmailVerification = async () => {
     setLoading(true);
     try {
       const user = auth.currentUser;
       if (user) {
-        await user.reload(); // Reload user data to get updated verification status
+        await user.reload();
         if (user.emailVerified) {
-          Alert.alert("Email Verified", "Your email has been verified!");
-          router.replace("/(tabs)/home"); // Navigate to home if verified
+          Toast.show({
+            type: "success",
+            text1: "Email Verified",
+            text2: "Your email has been verified successfully!",
+          });
+          router.replace("/(tabs)/home");
         } else {
-          Alert.alert(
-            "Email Not Verified",
-            "Please check your Email and click the link to  verify your email."
-          );
+          Toast.show({
+            type: "info",
+            text1: "Email Not Verified",
+            text2: "Please check your inbox and click the verification link.",
+          });
           setIsVerified(false);
         }
       } else {
-        Alert.alert("Error", "No user is currently logged in.");
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: "No user is currently logged in.",
+        });
       }
-    } catch (error) {
-      Alert.alert("Error", error.message);
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: error.message || "Something went wrong.",
+      });
     } finally {
       setLoading(false);
     }
@@ -68,33 +93,31 @@ const VerifyEmail = () => {
       return;
     }
     setLoading(true);
-    setCanResend(false); // Disable resend button
-    setCountdown(30); // Set countdown to 30 seconds
+    setCanResend(false);
+    setCountdown(30);
 
     try {
       const user = auth.currentUser;
       if (user) {
         await sendEmailVerification(user);
-        Alert.alert(
-          `Verification Email Sent to ${user.email}`,
-          "Please check your email to verify your account."
-        );
-        // Start countdown
-        const interval = setInterval(() => {
-          setCountdown((prev) => {
-            if (prev <= 1) {
-              clearInterval(interval);
-              setCanResend(true); // Enable resend button
-              return 0; // Reset countdown
-            }
-            return prev - 1; // Decrease countdown
-          });
-        }, 1000); // Update every second
+        Toast.show({
+          type: "success",
+          text1: "Verification Email Sent",
+          text2: `Please check ${user.email} to verify your account.`,
+        });
       } else {
-        Alert.alert("Error", "No user is currently logged in.");
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: "No user is currently logged in.",
+        });
       }
-    } catch (error) {
-      Alert.alert("Error", error.message);
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: error.message || "Something went wrong.",
+      });
     } finally {
       setLoading(false);
     }
@@ -113,16 +136,12 @@ const VerifyEmail = () => {
         inbox and click the link to verify your account.
       </Text>
       <TouchableOpacity
+        accessibilityLabel="Check if email is verified"
         style={[
           styles.button,
           {
-            width: "90%", // Adaptive to screen width
-            maxWidth: 400, // Limit maximum width
-            alignSelf: "center", // Center the button
+            backgroundColor: loading ? theme.teal : theme.tint,
           },
-          loading
-            ? { backgroundColor: theme.teal }
-            : { backgroundColor: theme.tint },
         ]}
         onPress={checkEmailVerification}
         disabled={loading}
@@ -134,16 +153,12 @@ const VerifyEmail = () => {
         )}
       </TouchableOpacity>
       <TouchableOpacity
+        accessibilityLabel="Resend email verification link"
         style={[
           styles.button,
           {
-            width: "90%",
-            maxWidth: 400,
-            alignSelf: "center",
+            backgroundColor: canResend ? theme.tint : theme.grey,
           },
-          canResend
-            ? { backgroundColor: theme.tint }
-            : { backgroundColor: theme.grey },
         ]}
         onPress={resendVerificationEmail}
         disabled={!canResend || loading}
@@ -156,9 +171,15 @@ const VerifyEmail = () => {
           </Text>
         )}
       </TouchableOpacity>
-      <TouchableOpacity onPress={handleNavigateToLogin}>
-        <Text style={styles.linkText}>Already verified? Log In</Text>
+      <TouchableOpacity
+        accessibilityLabel="Navigate to login screen"
+        onPress={handleNavigateToLogin}
+      >
+        <Text style={[styles.linkText, { color: theme.accent }]}>
+          Already verified? Log In
+        </Text>
       </TouchableOpacity>
+      <Toast />
     </View>
   );
 };
@@ -183,13 +204,13 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   button: {
-    height: 58,
+    height: screenWidth < 350 ? 50 : 58,
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
     marginTop: 40,
-    width: screenWidth > 500 ? "50%" : "70%", // Adapt based on screen width
-    maxWidth: 400, // Prevent overly wide buttons
+    width: screenWidth > 500 ? "50%" : "70%",
+    maxWidth: 400,
   },
   buttonText: {
     fontWeight: "bold",
@@ -198,7 +219,6 @@ const styles = StyleSheet.create({
   },
   linkText: {
     marginTop: 20,
-    color: Colors.pink,
     fontWeight: "600",
     fontSize: 14,
   },

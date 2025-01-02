@@ -1,6 +1,6 @@
-import { Tabs } from "expo-router";
 import React from "react";
 import { Platform } from "react-native";
+import { Tabs } from "expo-router";
 
 import TabBarBackground from "@/components/ui/TabBarBackground";
 import { Colors } from "@/constants/Colors";
@@ -10,20 +10,24 @@ import { HapticTab } from "@/components/HapticTab";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+        tabBarActiveTintColor: theme.tint,
+        tabBarInactiveTintColor: theme.grey,
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
         tabBarStyle: Platform.select({
           ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: "absolute",
+            position: "absolute", // Allows blur effect on iOS
+            backgroundColor: "transparent",
           },
-          default: {},
+          default: {
+            backgroundColor: theme.background,
+          },
         }),
       }}
     >
@@ -31,10 +35,13 @@ export default function TabLayout() {
         name="home"
         options={{
           title: "Chats",
+          tabBarAllowFontScaling: true,
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
               name={focused ? "chatbox-ellipses" : "chatbox-ellipses-outline"}
               color={color}
+              size={30}
+              accessibilityLabel="Chats Tab"
             />
           ),
         }}
@@ -47,6 +54,7 @@ export default function TabLayout() {
             <TabBarIcon
               name={focused ? "reload-circle-sharp" : "reload-circle-sharp"}
               color={color}
+              accessibilityLabel="Story Tab"
             />
           ),
         }}
@@ -55,12 +63,12 @@ export default function TabLayout() {
         name="Settings"
         options={{
           title: "Setting",
-          headerShown: true,
-
+          headerShown: true, // Enables header for Settings screen
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
               name={focused ? "settings" : "settings-outline"}
               color={color}
+              accessibilityLabel="Settings Tab"
             />
           ),
         }}

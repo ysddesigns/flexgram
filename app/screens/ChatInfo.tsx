@@ -4,6 +4,7 @@ import {
   TouchableOpacity,
   FlatList,
   Alert,
+  Image,
   useColorScheme,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,32 +13,24 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebaseConfig";
 import { Colors } from "@/constants/Colors";
 import Cell from "@/components/Cell";
-import { useLocalSearchParams, useRouter } from "expo-router";
-
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 
-const Text = ThemedText;
-const View = ThemedView;
-
-// Define types for user and chat parameters
 interface User {
   name: string;
   email: string;
+  avatar?: string; // Optional avatar URL
 }
 
 const ChatInfo: React.FC = () => {
-  const route = useRouter();
-  // const { chatId, chatName } = useSearchParams();
+  const router = useRouter();
   const { chatId, chatName } = useLocalSearchParams();
   const [users, setUsers] = useState<User[]>([]);
   const [groupName, setGroupName] = useState<string>("");
 
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme || "light"];
-
-  console.log("chatId:", chatId);
-  console.log("chatName:", chatName);
 
   useEffect(() => {
     const fetchChatInfo = async () => {
@@ -50,11 +43,11 @@ const ChatInfo: React.FC = () => {
           setUsers(chatData.users || []);
           setGroupName(chatData.groupName || "");
         } else {
-          Alert.alert("Error", "Chat does not exist");
+          Alert.alert("Error", "Chat does not exist.");
         }
       } catch (error) {
-        Alert.alert("Error", "An error occurred while fetching chat info");
-        console.error("Error fetching chat info: ", error);
+        console.error("Error fetching chat info:", error);
+        Alert.alert("Error", "Unable to fetch chat info. Please try again.");
       }
     };
 
@@ -62,16 +55,22 @@ const ChatInfo: React.FC = () => {
   }, [chatId]);
 
   const renderUser = ({ item }: { item: User }) => (
-    <View style={styles.userContainer}>
-      <Ionicons name="person-outline" size={30} color={theme.primary} />
-      <View style={styles.userInfo}>
-        <Text style={styles.userName}>{item.name}</Text>
-        <Text style={styles.userEmail}>{item.email}</Text>
-      </View>
-    </View>
+    <ThemedView style={styles.userContainer}>
+      <Image
+        source={
+          item.avatar
+            ? { uri: item.avatar } // Display user's avatar
+            : require("@/assets/images/fxLogo.png") // Fallback to default avatar
+        }
+        style={styles.avatarImage}
+      />
+      <ThemedView style={styles.userInfo}>
+        <ThemedText style={styles.userName}>{item.name}</ThemedText>
+        <ThemedText style={styles.userEmail}>{item.email}</ThemedText>
+      </ThemedView>
+    </ThemedView>
   );
 
-  // Create a unique list of users based on email
   const uniqueUsers = Array.from(
     new Map(users.map((user) => [user.email, user])).values()
   );
@@ -80,37 +79,56 @@ const ChatInfo: React.FC = () => {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
+      <Stack.Screen options={{ title: `${chatName}` }} />
+      {/* Group Avatar Section */}
       <TouchableOpacity
-        style={[styles.avatar, { backgroundColor: theme.background }]}
+        style={[styles.groupAvatar, { backgroundColor: theme.primary }]}
       >
-        <Text style={styles.avatarLabel}>
-          {chatName
-            .split(" ")
-            .reduce((prev, current) => `${prev}${current[0]}`, "")}
-        </Text>
+        <Image
+          source={
+            groupName
+              ? {
+                  uri: `https://ui-avatars.com/api/?name=${groupName}&background=random`,
+                } // Example API for generating avatars
+              : require("@/assets/images/fxLogo.png") // Fallback to default group avatar
+          }
+          style={styles.avatarImage}
+        />
       </TouchableOpacity>
-      <View style={styles.chatHeader}>
+
+      {/* Chat Details Section */}
+      <ThemedView style={styles.chatHeader}>
         {groupName ? (
           <>
-            <Text style={[styles.groupLabel, { color: theme.primary }]}>
+            <ThemedText
+              style={[styles.groupLabel, { color: theme.placeholder }]}
+            >
               Group
-            </Text>
-            <Text style={styles.chatTitle}>{chatName}</Text>
+            </ThemedText>
+            <ThemedText style={[styles.chatTitle, { color: theme.text }]}>
+              {groupName}
+            </ThemedText>
           </>
         ) : (
-          <Text style={styles.chatTitle}>{chatName}</Text>
+          <ThemedText style={[styles.chatTitle, { color: theme.text }]}>
+            {chatName}
+          </ThemedText>
         )}
-      </View>
+      </ThemedView>
 
+      {/* About Section */}
       <Cell
         title="About"
-        subtitle="Available"
+        subtitle="Group details and availability"
         icon="information-circle-outline"
-        iconColor={theme.primary}
+        iconColor={theme.icon}
         style={styles.cell}
       />
 
-      <Text style={styles.usersTitle}>Members</Text>
+      {/* Members Section */}
+      <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>
+        Members
+      </ThemedText>
       <FlatList
         data={uniqueUsers}
         renderItem={renderUser}
@@ -125,20 +143,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    alignItems: "center",
-    justifyContent: "center",
+  groupAvatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     alignSelf: "center",
     marginTop: 20,
-    marginBottom: 10,
+    marginBottom: 15,
+    overflow: "hidden",
   },
-  avatarLabel: {
-    fontSize: 36,
-    color: "white",
-    fontWeight: "bold",
+  avatarImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 50,
   },
   chatHeader: {
     alignItems: "center",
@@ -150,28 +167,25 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   chatTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "600",
-    color: "#333",
     textAlign: "center",
   },
   cell: {
     marginHorizontal: 16,
-    marginBottom: 15,
+    marginVertical: 10,
     paddingVertical: 12,
     paddingHorizontal: 10,
-    backgroundColor: "white",
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 0.5,
+    // borderRadius: 10,
+    // shadowColor: "#000",
+    // shadowOpacity: 0.1,
+    // shadowRadius: 8,
+    // elevation: 1,
   },
-  usersTitle: {
+  sectionTitle: {
     marginHorizontal: 16,
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
     marginTop: 20,
     marginBottom: 10,
   },
@@ -180,7 +194,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: "white",
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
@@ -190,7 +203,6 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#333",
   },
   userEmail: {
     fontSize: 14,

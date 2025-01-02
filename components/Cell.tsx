@@ -25,7 +25,12 @@ const Cell = ({
   return (
     <TouchableOpacity style={[styles.cell, style]} onPress={onPress}>
       <View style={[styles.iconContainer, { backgroundColor: tintColor }]}>
-        <Ionicons name={icon} size={24} marginStart={4} color={theme.icon} />
+        <Ionicons
+          name={icon}
+          size={24}
+          marginStart={4}
+          color={iconColor || theme.icon}
+        />
       </View>
 
       <View style={styles.textsContainer}>
@@ -36,7 +41,7 @@ const Cell = ({
         <Ionicons
           name={secondIcon ?? "chevron-forward-outline"}
           size={20}
-          color={theme.icon}
+          color={iconColor || theme.icon}
         />
       )}
     </TouchableOpacity>

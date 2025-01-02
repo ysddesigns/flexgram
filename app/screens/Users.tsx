@@ -6,7 +6,7 @@ import {
   useColorScheme,
   ActivityIndicator,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import {
   collection,
   onSnapshot,
@@ -19,7 +19,7 @@ import {
 import { auth, db } from "@/firebaseConfig";
 import { Colors } from "@/constants/Colors";
 import Cell from "@/components/Cell";
-import ContactRow from "@/components/ContactRow";
+import ContactRow from "@/components/ContactRow"; // Make sure this component is defined to display user info
 import { User } from "@/types";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -45,50 +45,59 @@ const Users: React.FC = () => {
     }>
   >([]);
 
+  const fetchUsers = () => {
+    const collectionUserRef = collection(db, "users");
+    const q = query(collectionUserRef, orderBy("name", "asc"));
+
+    return onSnapshot(q, (snapshot) => {
+      const fetchedUsers = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as User[];
+      setUsers(fetchedUsers);
+      setLoading(false);
+    });
+  };
+
+  const fetchChats = () => {
+    const user = auth.currentUser;
+    const collectionChatsRef = collection(db, "chats");
+    const q2 = query(
+      collectionChatsRef,
+      where("users", "array-contains", {
+        email: user.email || "", // Fallback to an empty string
+        name: user.displayName || "", // Fallback to an empty string
+        deletedFromChat: false,
+        avatar: user.photoURL || "", // Fallback to an empty string
+      }),
+      where("groupName", "==", "")
+    );
+    return onSnapshot(q2, (snapshot) => {
+      const existing = snapshot.docs.map((doc) => ({
+        chatId: doc.id,
+        userEmails: doc.data().users,
+      }));
+      setExistingChats(existing);
+    });
+  };
   useEffect(() => {
-    const unsubscribeUsers = auth.onAuthStateChanged((user) => {
-      if (user) {
-        const collectionUserRef = collection(db, "users");
-        const q = query(collectionUserRef, orderBy("name", "asc"));
+    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        setLoading(false);
 
-        const unsubscribeFromUsers = onSnapshot(q, (snapshot) => {
-          const fetchedUsers = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          })) as User[];
-          setUsers(fetchedUsers);
-          setLoading(false);
-        });
-
-        const collectionChatsRef = collection(db, "chats");
-        const q2 = query(
-          collectionChatsRef,
-          where("users", "array-contains", {
-            email: user.email,
-            name: user.displayName,
-            deletedFromChat: false,
-          }),
-          where("groupName", "==", "")
-        );
-
-        const unsubscribeFromChats = onSnapshot(q2, (snapshot) => {
-          const existing = snapshot.docs.map((existingChat) => ({
-            chatId: existingChat.id,
-            userEmails: existingChat.data().users,
-          }));
-          setExistingChats(existing);
-        });
-
-        return () => {
-          unsubscribeFromUsers();
-          unsubscribeFromChats();
-        };
-      } else {
-        setLoading(false); // Set loading to false if no user is authenticated
+        return;
       }
+
+      const unsubscribeUsers = fetchUsers();
+      const unsubscribeChats = fetchChats();
+
+      return () => {
+        unsubscribeUsers();
+        unsubscribeChats();
+      };
     });
 
-    return () => unsubscribeUsers();
+    return () => unsubscribeAuth();
   }, []);
 
   const handleNewGroup = useCallback(() => {
@@ -100,85 +109,106 @@ const Users: React.FC = () => {
   }, []);
 
   const handleNavigate = useCallback(
-    (user: User) => {
-      let navigationChatID = "";
-      let messageYourselfChatID = "";
+    async (user: User) => {
+      const currentUserEmail = auth?.currentUser?.email;
+      console.log("Current user email:", currentUserEmail);
 
-      existingChats.forEach((existingChat) => {
-        const isCurrentUserInTheChat = existingChat.userEmails.some(
-          (e) => e.email === auth?.currentUser?.email
+      // Ensure current user is authenticated
+      if (!currentUserEmail) {
+        console.error("User is not authenticated.");
+        alert("You must be logged in to access chats.");
+        return; // Exit if the user is not authenticated
+      }
+
+      // Check if the user is trying to navigate to themselves
+      if (currentUserEmail === user.email) {
+        console.warn("User is trying to navigate to themselves.");
+        return; // Prevent navigation to self chat
+      }
+
+      // Find existing chats
+      const existingChat = existingChats.find((existingChat) => {
+        const isCurrentUserInChat = existingChat.userEmails.some(
+          (e) => e.email === currentUserEmail
         );
-        const isMessageYourselfExists = existingChat.userEmails.filter(
+        const isUserInChat = existingChat.userEmails.some(
           (e) => e.email === user.email
-        ).length;
+        );
 
-        if (
-          isCurrentUserInTheChat &&
-          existingChat.userEmails.some((e) => e.email === user.email)
-        ) {
-          navigationChatID = existingChat.chatId;
-        }
-
-        if (isMessageYourselfExists === 2) {
-          messageYourselfChatID = existingChat.chatId;
-        }
-
-        // Prevent navigation to self chat
-        if (auth?.currentUser?.email === user.email) {
-          navigationChatID = "";
-        }
+        return isCurrentUserInChat && isUserInChat;
       });
 
-      const chatIDToNavigate = messageYourselfChatID || navigationChatID;
-
-      if (chatIDToNavigate) {
+      // If there’s an existing chat, set the chat ID to navigate
+      if (existingChat) {
+        console.log("Existing chat found:", existingChat);
+        const chatParams = {
+          chatId: existingChat.chatId,
+          // chatId: "ZWvzuqDJtLTVeY2Bo3mn",
+          chatName: handleName(user),
+          userEmail: user.email,
+          avatar: user.avatar,
+        };
+        console.log("Navigating to existing chat with params:", chatParams);
         router.push({
           pathname: "/screens/Chat",
-          params: { id: chatIDToNavigate, chatName: handleName(user) },
+          params: chatParams,
         });
       } else {
-        // Create new chat
-        const newRef = doc(collection(db, "chats"));
-        setDoc(newRef, {
-          lastUpdated: Date.now(),
-          groupName: "",
-          users: [
-            {
-              email: auth?.currentUser?.email,
-              name: auth?.currentUser?.displayName,
-              deletedFromChat: false,
-            },
-            {
-              email: user.email,
-              name: user.name,
-              deletedFromChat: false,
-            },
-          ],
-          lastAccess: [
-            { email: auth?.currentUser?.email, date: Date.now() },
-            { email: user.email, date: "" },
-          ],
-          messages: [],
-        })
-          .then(() => {
-            router.push({
-              pathname: "/screens/Chat",
-              params: { id: newRef.id, chatName: handleName(user) },
-            });
-          })
-          .catch((error) => {
-            console.error("Error creating chat:", error);
+        // Create a new chat if no existing chat was found
+        const newChatRef = doc(collection(db, "chats"));
+
+        // Validate user data before proceeding
+        console.log("Creating new chat with:", {
+          currentUserEmail,
+          userEmail: user.email,
+        });
+
+        if (!currentUserEmail || !user.email) {
+          console.error("Invalid user data: cannot create chat.");
+          return; // Exit if user data is invalid
+        }
+
+        try {
+          await setDoc(newChatRef, {
+            lastUpdated: Date.now(),
+            groupName: "",
+            users: [
+              {
+                email: currentUserEmail,
+                name: auth.currentUser?.displayName || "",
+                deletedFromChat: false,
+                avatar: auth.currentUser?.photoURL || "",
+              },
+              {
+                email: user.email,
+                name: user.name || "",
+                deletedFromChat: false,
+                avatar: user.avatar || "",
+              },
+            ],
+            lastAccess: [
+              { email: currentUserEmail, date: Date.now() },
+              { email: user.email, date: "" },
+            ],
+            messages: [],
           });
+
+          router.push({
+            pathname: "/screens/Chat",
+            params: {
+              chatId: newChatRef.id,
+              chatName: handleName(user),
+              userEmail: user.email,
+            },
+          });
+        } catch (error) {
+          console.error("Error creating chat:", error);
+          alert("Failed to create chat. Please try again.");
+        }
       }
     },
     [existingChats, router]
   );
-
-  const handleSubtitle = useCallback((user: User) => {
-    return user.email === auth?.currentUser?.email
-      ? "Message yourself"
-      : "User status";
-  }, []);
 
   const handleName = useCallback((user: User) => {
     const name = user.name;
@@ -194,17 +224,19 @@ const Users: React.FC = () => {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
+      <Stack.Screen options={{ title: "Users" }} />
+
       <Cell
         title="New group"
         icon="people"
-        tintColor={theme.teal}
+        tintColor={"transparent"}
         onPress={handleNewGroup}
         style={{ marginTop: 5 }}
       />
       <Cell
         title="New user"
         icon="person-add"
-        tintColor={theme.teal}
+        tintColor={"transparent"}
         onPress={handleNewUser}
         style={{ marginBottom: 10 }}
       />
@@ -220,14 +252,12 @@ const Users: React.FC = () => {
             <Text style={styles.textContainer}>Registered users</Text>
           </View>
           {users.map((user) => (
-            <React.Fragment key={user.id}>
-              <ContactRow
-                name={handleName(user)}
-                subtitle={handleSubtitle(user)}
-                onPress={() => handleNavigate(user)}
-                showForwardIcon={false}
-              />
-            </React.Fragment>
+            <ContactRow
+              name={handleName(user)}
+              key={user.id}
+              user={user}
+              onPress={() => handleNavigate(user)} // Navigate to the user's chat
+            />
           ))}
         </ScrollView>
       )}
@@ -238,6 +268,7 @@ const Users: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 10,
   },
   blankContainer: {
     flex: 1,

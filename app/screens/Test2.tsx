@@ -57,12 +57,12 @@ interface Chat {
   newMessageCount: number;
   user: User;
 }
-const Home = () => {
+const Test2 = () => {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme || "light"];
   const { unreadMessages } = React.useContext(UnreadMessagesContext);
   const { chatId } = useLocalSearchParams();
-  const [newMessages, setNewMessages] = useState<[]>({});
+  const [newMessages, setNewMessages] = useState({});
   const [unreadCount, setUnreadCount] = useState<number | unknown>(0);
   const [loading, setLoading] = useState(true);
 
@@ -378,31 +378,18 @@ const Home = () => {
       )}
       <TouchableOpacity
         style={[
-          styles.fab,
+          styles.fabContainer,
           { backgroundColor: theme.background, borderRadius: 12 },
         ]}
         onPress={handleFabPress}
       >
-        <View
-          style={[
-            styles.fabContainer && {
-              backgroundColor: theme.teal,
-              padding: 5,
-              borderRadius: 21,
-            },
-          ]}
-        >
-          <Ionicons
-            name="add-sharp"
-            size={34}
-            color="white"
-            style={styles.fabIcon}
-          />
-        </View>
+        <Ionicons name="add-sharp" size={34} color="gray" />
       </TouchableOpacity>
     </SafeAreaView>
   );
 };
+
+export default Test2;
 
 const styles = StyleSheet.create({
   ParentContainer: {
@@ -432,5 +419,3 @@ const styles = StyleSheet.create({
     borderRadius: 15,
   },
 });
-
-export default Home;
